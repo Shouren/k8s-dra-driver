@@ -60,11 +60,13 @@ type Flags struct {
 	healthcheckPort               int
 	klogVerbosity                 int
 	additionalXidsToIgnore        string
+	deviceMemoryConfigFile        string
 }
 
 type Config struct {
-	flags      *Flags
-	clientsets pkgflags.ClientSets
+	deviceMemoryBytes uint64
+	flags             *Flags
+	clientsets        pkgflags.ClientSets
 }
 
 func (c Config) DriverPluginPath() string {
@@ -84,6 +86,12 @@ func newApp() *cli.App {
 	flags := &Flags{}
 
 	cliFlags := []cli.Flag{
+		&cli.StringFlag{
+			Name:        "device-memory-config-file",
+			Usage:       "HAMi-Core device memory policy file (Kubernetes Quantity, rounded up to 1 MiB).",
+			Destination: &flags.deviceMemoryConfigFile,
+			EnvVars:     []string{"DEVICE_MEMORY_CONFIG_FILE"},
+		},
 		&cli.StringFlag{
 			Name:        "node-name",
 			Usage:       "The name of the node to be worked on.",
@@ -203,6 +211,10 @@ func newApp() *cli.App {
 			config := &Config{
 				flags:      flags,
 				clientsets: clientSets,
+			}
+
+			if err := config.loadDeviceMemoryBudget(c.Context, featuregates.Enabled(featuregates.HAMiCoreSupport)); err != nil {
+				return err
 			}
 
 			return RunPlugin(c.Context, config)

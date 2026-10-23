@@ -65,6 +65,20 @@ driver:
   cdiRoot: /var/run/cdi
   hostHookPath: /usr/local
   hostTmp: /tmp
+  # HAMi-Core fallback only when NVML memory reporting is unsupported.
+  # Kubernetes Quantity string; prefer Mi/Gi. Unitless values are bytes,
+  # and m means milli, not MiB. Positive values round UP to a whole 1 MiB.
+  # The driver logs requested/effective values at startup. "0" disables fallback.
+  preConfiguredDeviceMemory: "0"
+  # Ordered rules; first matching Kubernetes LabelSelector wins.
+  # Node labels are read once at startup. Example:
+  # nodeConfig:
+  #   - name: spark
+  #     nodeSelector:
+  #       matchLabels:
+  #         project-hami.io/gpu-memory-profile: spark-standard
+  #     preConfiguredDeviceMemory: "64Gi"
+  nodeConfig: []
 
 # Feature gates forwarded to the hami-kubelet-plugin binary as the
 # FEATURE_GATES environment variable.

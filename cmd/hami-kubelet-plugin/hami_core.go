@@ -185,7 +185,10 @@ type HAMiCoreManager struct {
 	// hostHookPath addresses the same tree as hookPath, but as seen from the
 	// host: CDI mount sources are resolved in the host mount namespace.
 	hostHookPath string
-	nvdevlib     *deviceLib
+	// claimCacheRoot is the plugin-side cache root. Keeping filesystem access
+	// local to this root also lets lifecycle tests use an isolated directory.
+	claimCacheRoot string
+	nvdevlib       *deviceLib
 }
 
 func NewHAMiCoreManager(deviceLib *deviceLib) *HAMiCoreManager {
@@ -194,8 +197,9 @@ func NewHAMiCoreManager(deviceLib *deviceLib) *HAMiCoreManager {
 		hostHookPath = filepath.Clean(v)
 	}
 	return &HAMiCoreManager{
-		nvdevlib:     deviceLib,
-		hostHookPath: hostHookPath,
+		nvdevlib:       deviceLib,
+		hostHookPath:   hostHookPath,
+		claimCacheRoot: filepath.Join(hookPath, "vgpu", "claims"),
 	}
 }
 
@@ -212,7 +216,7 @@ func (m *HAMiCoreManager) getConsumableCapacityMap(claim *resourceapi.ResourceCl
 }
 
 func (m *HAMiCoreManager) GetCDIContainerEdits(claim *resourceapi.ResourceClaim, devs AllocatableDevices) *cdiapi.ContainerEdits {
-	cacheFileDirectory := fmt.Sprintf("%s/vgpu/claims/%s", hookPath, claim.UID)
+	cacheFileDirectory := filepath.Join(m.claimCacheRoot, string(claim.UID))
 	cacheFileHostDirectory := filepath.Join(m.hostHookPath, "vgpu", "claims", string(claim.UID))
 	// TODO: We should check the status of claim, becasue there may be two pod share the claim
 	var err error
@@ -295,7 +299,7 @@ func (m *HAMiCoreManager) GetCDIContainerEdits(claim *resourceapi.ResourceClaim,
 }
 
 func (m *HAMiCoreManager) Unprepare(claimUID string, pl PreparedDeviceList) error {
-	path := fmt.Sprintf("%s/vgpu/claims/%s", hookPath, claimUID)
+	path := filepath.Join(m.claimCacheRoot, claimUID)
 	_ = os.RemoveAll(path)
 	return nil
 }

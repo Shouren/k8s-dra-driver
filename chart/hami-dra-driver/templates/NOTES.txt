@@ -1,0 +1,9 @@
+{{- if eq (include "hami-dra-driver.hamiCoreEnabled" .) "true" }}
+HAMi-Core device memory fallback uses Kubernetes Quantity strings (prefer Mi/Gi).
+The supported granularity is 1 MiB. Positive values are rounded UP to the next
+whole MiB; the driver startup log shows the requested and effective capacity.
+Unitless values are bytes; "m" means milli, not MiB. "0" disables fallback.
+Node rules use list order: the first matching nodeSelector wins. Labels and
+configuration are read at startup; retire existing GPU allocations before
+changing their budget and rolling the affected plugin Pods.
+{{- end }}

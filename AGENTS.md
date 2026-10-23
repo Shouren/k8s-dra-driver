@@ -112,6 +112,8 @@ This section defines the architectural agents within the project for SDD.
     *   Provides MIG device lifecycle operations: `createMigDevice`, `deleteMigDevice`, `FindMigDevBySpec`, `obliterateStaleMIGDevices`.
     *   Discovers VFIO devices (`discoverVfioDevice`) and GPU-by-PCIe-bus-ID (`discoverGPUByPCIBusID`) for the passthrough flow.
     *   Wraps physical GPUs as HAMi-Core devices via `wrapHAMiCoreGpu` (defined in `hami_core.go`).
+    *   Receives a resolved `deviceMemoryBytes` fallback from startup configuration. Only with `HAMiCoreSupport` enabled, `GetMemoryInfo` returning `ERROR_NOT_SUPPORTED` on a non-MIG GPU uses this budget; a missing budget or MIG-enabled device is skipped. Other NVML errors and all discovery behavior with HAMi-Core disabled retain the inherited semantics.
+    *   Startup configuration (`device_memory_config.go`) strictly loads an optional mounted YAML policy, resolves ordered `metav1.LabelSelector` rules against this node's labels, and normalizes Kubernetes Quantity budgets upward to 1 MiB with overflow checks and startup diagnostics. Rules are slices in YAML order; the first match wins. Node labels are fetched once with a 30-second request timeout only when rules exist. Disabled HAMi-Core adds no configuration reads or Node requests.
     *   Maintains internal lookup maps for hot-path operations: `gpuInfosByUUID`, `gpuUUIDbyMinor`, `devhandleByUUID`.
 
 ### 5. VFIO-PCI Manager (Passthrough Agent)

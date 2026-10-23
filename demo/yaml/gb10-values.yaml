@@ -1,0 +1,14 @@
+# Helm values, not a Kubernetes manifest. Apply with helm install/upgrade -f.
+# Set this label through the node pool provisioning process:
+# project-hami.io/gpu-memory-profile=spark-standard
+featureGates:
+  HAMiCoreSupport: true
+driver:
+  preConfiguredDeviceMemory: "0"
+  nodeConfig:
+    - name: spark-standard
+      nodeSelector:
+        matchLabels:
+          project-hami.io/gpu-memory-profile: spark-standard
+      # Example only: reserve memory for the OS and CPU workloads first.
+      preConfiguredDeviceMemory: "64Gi"

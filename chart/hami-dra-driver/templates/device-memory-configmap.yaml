@@ -1,0 +1,12 @@
+{{- if eq (include "hami-dra-driver.hamiCoreEnabled" .) "true" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "hami-dra-driver.deviceMemoryConfigMapName" . }}
+  namespace: {{ include "hami-dra-driver.namespace" . }}
+  labels:
+    {{- include "hami-dra-driver.labels" . | nindent 4 }}
+data:
+  device-memory.yaml: |
+    {{- dict "preConfiguredDeviceMemory" .Values.driver.preConfiguredDeviceMemory "nodeConfig" .Values.driver.nodeConfig | toYaml | nindent 4 }}
+{{- end }}

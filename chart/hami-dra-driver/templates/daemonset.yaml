@@ -1,4 +1,5 @@
 ---
+{{- $hamiCoreEnabled := eq (include "hami-dra-driver.hamiCoreEnabled" .) "true" }}
 {{- $hostHookPath := .Values.driver.hostHookPath | default "/usr/local" }}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -17,9 +18,14 @@ spec:
   {{- end }}
   template:
     metadata:
-      {{- with .Values.kubeletPlugin.podAnnotations }}
+      {{- if or $hamiCoreEnabled .Values.kubeletPlugin.podAnnotations }}
       annotations:
+        {{- with .Values.kubeletPlugin.podAnnotations }}
         {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- if $hamiCoreEnabled }}
+        checksum/device-memory: {{ include (print $.Template.BasePath "/device-memory-configmap.yaml") . | sha256sum }}
+        {{- end }}
       {{- end }}
       labels:
         {{- include "hami-dra-driver.templateLabels" . | nindent 8 }}
@@ -129,6 +135,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        {{- if $hamiCoreEnabled }}
+        - name: DEVICE_MEMORY_CONFIG_FILE
+          value: /etc/hami-dra/device-memory.yaml
+        {{- end }}
         - name: HAMI_HOST_HOOK_PATH
           value: {{ $hostHookPath | quote }}
         - name: IMAGE_NAME
@@ -163,6 +173,11 @@ spec:
         - name: driver-root
           mountPath: /driver-root
           mountPropagation: HostToContainer
+        {{- if $hamiCoreEnabled }}
+        - name: device-memory
+          mountPath: /etc/hami-dra
+          readOnly: true
+        {{- end }}
         - name: host-vgpu
           mountPath: /usr/local/vgpu
         - name: host-tmp
@@ -180,6 +195,11 @@ spec:
           mountPropagation: Bidirectional
         {{- end }}
       volumes:
+      {{- if $hamiCoreEnabled }}
+      - name: device-memory
+        configMap:
+          name: {{ include "hami-dra-driver.deviceMemoryConfigMapName" . }}
+      {{- end }}
       - name: plugins-registry
         hostPath:
           path: {{ .Values.kubeletPlugin.kubeletRegistrarDirectoryPath | quote }}

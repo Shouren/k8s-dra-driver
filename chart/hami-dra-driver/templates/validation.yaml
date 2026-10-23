@@ -48,3 +48,27 @@
 {{- $error = printf "%s\nPlease ensure your cluster supports Dynamic Resource Allocation (DRA) with one of these API versions." $error }}
 {{- fail $error }}
 {{- end }}
+
+{{/* Quantity parsing and rounding are authoritative in the driver. */}}
+{{- if eq (include "hami-dra-driver.hamiCoreEnabled" .) "true" }}
+{{- if not (kindIs "string" .Values.driver.preConfiguredDeviceMemory) }}
+{{- fail "driver.preConfiguredDeviceMemory must be a Kubernetes Quantity string, for example \"64Gi\" or \"0\"" }}
+{{- end }}
+{{- if not (kindIs "slice" .Values.driver.nodeConfig) }}
+{{- fail "driver.nodeConfig must be an ordered list" }}
+{{- end }}
+{{- range .Values.driver.nodeConfig }}
+{{- if not (kindIs "map" .) }}
+{{- fail "each driver.nodeConfig rule must be a mapping" }}
+{{- end }}
+{{- if or (not (kindIs "string" .name)) (empty .name) }}
+{{- fail "each driver.nodeConfig rule requires a nonempty name" }}
+{{- end }}
+{{- if or (not (kindIs "map" .nodeSelector)) (empty .nodeSelector) }}
+{{- fail "each driver.nodeConfig rule requires a nonempty nodeSelector" }}
+{{- end }}
+{{- if not (kindIs "string" .preConfiguredDeviceMemory) }}
+{{- fail "each driver.nodeConfig rule requires a preConfiguredDeviceMemory Quantity string" }}
+{{- end }}
+{{- end }}
+{{- end }}

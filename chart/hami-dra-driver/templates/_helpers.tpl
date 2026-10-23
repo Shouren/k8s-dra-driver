@@ -110,3 +110,17 @@ resource.k8s.io/v1beta1
 {{- fail "hami-dra-driver.resourceApiVersion: no supported resource.k8s.io API version found (requires v1, v1beta2, or v1beta1). Set resourceApiVersion explicitly to bypass." -}}
 {{- end -}}
 {{- end }}
+
+{{/* Match the driver's HAMiCoreSupport default when the gate is omitted. */}}
+{{- define "hami-dra-driver.hamiCoreEnabled" -}}
+{{- if hasKey .Values.featureGates "HAMiCoreSupport" -}}
+{{- .Values.featureGates.HAMiCoreSupport -}}
+{{- else -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/* Keep the release name intact (Helm limits it to 53 characters). */}}
+{{- define "hami-dra-driver.deviceMemoryConfigMapName" -}}
+{{- printf "%s-device-memory" .Release.Name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}

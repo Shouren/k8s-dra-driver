@@ -37,7 +37,9 @@ func TestNewHAMiCoreManagerHostHookPath(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Setenv(hostHookPathEnvVar, tt.env)
-			require.Equal(t, tt.want, NewHAMiCoreManager(nil).hostHookPath)
+			manager := NewHAMiCoreManager(nil)
+			require.Equal(t, tt.want, manager.hostHookPath)
+			require.Equal(t, "/usr/local/vgpu/claims", manager.claimCacheRoot)
 		})
 	}
 }
